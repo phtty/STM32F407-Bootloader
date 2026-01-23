@@ -13,16 +13,16 @@
 #define CONFIG_MAGIC       0x0d000721
 
 // 网络配置
-typedef struct {
-    uint8_t use_dhcp;
+__attribute__((aligned(4))) typedef struct {
     uint8_t mac[6];
     uint8_t ip[4];
+    uint8_t mask[4];
     uint8_t gw[4];
     uint16_t port;
 } NetConfig_t;
 
 // main app信息
-typedef struct {
+__attribute__((aligned(4))) typedef struct {
     uint32_t size;  // Main App的字节长度
     uint32_t crc32; // Main App的CRC32值
     char version[32];
@@ -42,11 +42,6 @@ typedef enum {
     updating = 1,
     failed   = 2,
 } UpdateSta_t;
-
-#define CONFIG_ADDR       0x08004000
-#define MAIN_APP_ADDR     0x08040000
-#define RECOVERY_APP_ADDR 0x08008000
-#define MAGIC_NUMBER      0x0d000721
 
 __attribute__((naked)) void execute_jump(uint32_t app_addr);
 uint8_t Is_App_Exist(uint32_t app_addr);

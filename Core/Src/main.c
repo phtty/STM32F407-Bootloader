@@ -133,19 +133,23 @@ int main(void)
             uint32_t app_word_len = (pConfig->app_info.size + 3) / 4;
             uint32_t calc_app_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)ADDR_MAIN_APP, app_word_len);
 
-            do { // 先判断升级状态机，状态机有误则直接进recovery
-                if (pConfig->update_sta != updated) {
-                    jump_target = ADDR_RECOVERY_APP; // 升级未完成，需要进recovery处理
-                    break;
+            // 先判断升级状态机，状态机有误则直接进recovery
+            do {
+                if (pConfig->update_sta != updated) { // 升级未完成，需要进recovery处理
+                    jump_target = ADDR_RECOVERY_APP;
+                    break; // 通过break while实现提前跳出
                 }
 
-                if (calc_app_crc == pConfig->app_info.crc32 && Is_App_Exist(ADDR_MAIN_APP)) {
-                    jump_target = ADDR_MAIN_APP; // 校验通过
-                    break;
+                if (calc_app_crc == pConfig->app_info.crc32 && Is_App_Exist(ADDR_MAIN_APP)) { // 校验通过
+                    jump_target = ADDR_MAIN_APP;
+                    break; // 通过break while实现提前跳出
 
-                } else {
-                    jump_target = ADDR_RECOVERY_APP; // App损坏
-                    break;
+                } else { // App损坏
+                    jump_target = ADDR_RECOVERY_APP;
+                    /*
+                     * todo：这里还需要实现一个将config info中的升级状态机写成升级失败的逻辑
+                     */
+                    break; // 通过break while实现提前跳出
                 }
             } while (false);
         }
