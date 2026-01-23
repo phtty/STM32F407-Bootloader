@@ -23,7 +23,7 @@ bool Is_Config_Empty(SysInfo_t *info)
 void Init_Config_Info(SysInfo_t *info)
 {
     info->magic      = CONFIG_MAGIC; // 初始化魔数
-    info->update_sta = failed;       // 初始化升级状态机
+    info->update_sta = updated;      // 初始化升级状态机为成功
 
     memset(&(info->app_info), 0, sizeof(info->app_info)); // 初始化固件信息
 
@@ -37,7 +37,22 @@ void Init_Config_Info(SysInfo_t *info)
     memcpy(&(info->net_cfg), &net_info, sizeof(NetConfig_t));
 
     // 计算config info的crc校验值
-    info->config_crc = HAL_CRC_Calculate(&hcrc, info, sizeof(info) - sizeof(info->config_crc));
+    info->config_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)info, sizeof(info) - sizeof(info->config_crc));
+
+    // 擦除config info所在扇区并将数据写入
+    EraseConfigInfo();
+    WriteConfigInfo(info);
+}
+
+/**
+ * @brief 修改config info并写入flash
+ *
+ * @param info config info结构体
+ */
+void Edit_Config_Info(SysInfo_t *info)
+{
+    // 计算config info的crc校验值
+    info->config_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)info, sizeof(info) - sizeof(info->config_crc));
 
     // 擦除config info所在扇区并将数据写入
     EraseConfigInfo();
