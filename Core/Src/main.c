@@ -106,18 +106,16 @@ int main(void)
     }
 
     // 读取崩溃计数和强制升级标志
-    uint32_t force_flag  = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0);
-    uint32_t crash_count = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
-    SysInfo_t *pConfig   = (SysInfo_t *)ADDR_CONFIG_SECTOR;
+    uint32_t force_flag   = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0);
+    uint32_t crash_count  = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
+    SysInfo_t *pConfig    = (SysInfo_t *)ADDR_CONFIG_SECTOR;
+    SysInfo_t config_info = {0};
 
     force_flag = FLAG_FORCE_UPGRADE;        // 测试用，为了进恢复模式
     if (force_flag == FLAG_FORCE_UPGRADE) { // 条件A: 强制升级标志
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, 0);
         jump_target = ADDR_RECOVERY_APP;
-        /*
-         * 将config info中的升级状态机写成升级失败
-         */
-        SysInfo_t config_info = {0};
+
         memcpy(&config_info, pConfig, sizeof(config_info));
         config_info.update_sta = failed;
         Edit_Config_Info(&config_info);
@@ -125,19 +123,12 @@ int main(void)
     } else if (crash_count > MAX_CRASH_COUNT) { // 条件B: 崩溃过频
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
         jump_target = ADDR_RECOVERY_APP;
-        /*
-         * 将config info中的升级状态机写成升级失败
-         */
-        SysInfo_t config_info = {0};
+
         memcpy(&config_info, pConfig, sizeof(config_info));
         config_info.update_sta = failed;
         Edit_Config_Info(&config_info);
 
     } else if (Is_Config_Empty(pConfig)) { // 条件C: 出厂烧录状态
-        /*
-         * 初始化config info
-         */
-        SysInfo_t config_info = {0};
         Init_Config_Info(&config_info);
 
         if (Is_App_Exist(ADDR_MAIN_APP))
@@ -163,19 +154,14 @@ int main(void)
 
                 if (calc_app_crc == pConfig->app_info.crc32 && Is_App_Exist(ADDR_MAIN_APP)) { // 校验通过
                     jump_target = ADDR_MAIN_APP;
-                    break; // 通过break while实现提前跳出
 
                 } else { // App损坏
                     jump_target = ADDR_RECOVERY_APP;
-                    /*
-                     * 将config info中的升级状态机写成升级失败
-                     */
+
                     SysInfo_t config_info = {0};
                     memcpy(&config_info, pConfig, sizeof(config_info));
                     config_info.update_sta = failed;
                     Edit_Config_Info(&config_info);
-
-                    break; // 通过break while实现提前跳出
                 }
             } while (false);
         }
