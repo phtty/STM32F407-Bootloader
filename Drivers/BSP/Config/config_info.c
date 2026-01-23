@@ -6,7 +6,7 @@
 /**
  * @brief 判断配置区是否为全空(0xFF)
  */
-bool Is_Config_Empty(SysInfo_t *info)
+bool Is_Config_Empty(volatile const SysInfo_t *info)
 {
     // 检查魔数和一部分关键内容是否为0xFF
     if (info->magic == 0xFFFFFFFF && info->config_crc == 0xFFFFFFFF) {
