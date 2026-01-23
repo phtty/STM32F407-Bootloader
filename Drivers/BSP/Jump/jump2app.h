@@ -14,11 +14,10 @@
 
 // ÍøÂçÅäÖÃ
 __attribute__((aligned(4))) typedef struct {
-    uint8_t mac[6];
     uint8_t ip[4];
     uint8_t mask[4];
     uint8_t gw[4];
-    uint16_t port;
+    uint32_t port;
 } NetConfig_t;
 
 // main appĞÅÏ¢
