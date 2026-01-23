@@ -115,20 +115,30 @@ int main(void)
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, 0);
         jump_target = ADDR_RECOVERY_APP;
         /*
-         * todo：这里还需要实现一个将config info中的升级状态机写成升级失败
+         * 将config info中的升级状态机写成升级失败
          */
+        SysInfo_t config_info = {0};
+        memcpy(&config_info, pConfig, sizeof(config_info));
+        config_info.update_sta = failed;
+        Edit_Config_Info(&config_info);
 
     } else if (crash_count > MAX_CRASH_COUNT) { // 条件B: 崩溃过频
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
         jump_target = ADDR_RECOVERY_APP;
         /*
-         * todo：这里还需要实现一个将config info中的升级状态机写成升级失败
+         * 将config info中的升级状态机写成升级失败
          */
+        SysInfo_t config_info = {0};
+        memcpy(&config_info, pConfig, sizeof(config_info));
+        config_info.update_sta = failed;
+        Edit_Config_Info(&config_info);
 
     } else if (Is_Config_Empty(pConfig)) { // 条件C: 出厂烧录状态
         /*
-         * todo: 初始化config info
+         * 初始化config info
          */
+        SysInfo_t config_info = {0};
+        Init_Config_Info(&config_info);
 
         if (Is_App_Exist(ADDR_MAIN_APP))
             jump_target = ADDR_MAIN_APP; // 首次运行
@@ -158,8 +168,13 @@ int main(void)
                 } else { // App损坏
                     jump_target = ADDR_RECOVERY_APP;
                     /*
-                     * todo：这里还需要实现一个将config info中的升级状态机写成升级失败
+                     * 将config info中的升级状态机写成升级失败
                      */
+                    SysInfo_t config_info = {0};
+                    memcpy(&config_info, pConfig, sizeof(config_info));
+                    config_info.update_sta = failed;
+                    Edit_Config_Info(&config_info);
+
                     break; // 通过break while实现提前跳出
                 }
             } while (false);
