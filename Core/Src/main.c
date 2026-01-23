@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "jump2app.h"
+#include "config_info.h"
 #include <stdbool.h>
 /* USER CODE END Includes */
 
@@ -113,12 +114,22 @@ int main(void)
     if (force_flag == FLAG_FORCE_UPGRADE) { // 条件A: 强制升级标志
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, 0);
         jump_target = ADDR_RECOVERY_APP;
+        /*
+         * todo：这里还需要实现一个将config info中的升级状态机写成升级失败
+         */
 
     } else if (crash_count > MAX_CRASH_COUNT) { // 条件B: 崩溃过频
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
         jump_target = ADDR_RECOVERY_APP;
+        /*
+         * todo：这里还需要实现一个将config info中的升级状态机写成升级失败
+         */
 
     } else if (Is_Config_Empty(pConfig)) { // 条件C: 出厂烧录状态
+        /*
+         * todo: 初始化config info
+         */
+
         if (Is_App_Exist(ADDR_MAIN_APP))
             jump_target = ADDR_MAIN_APP; // 首次运行
         else
@@ -147,7 +158,7 @@ int main(void)
                 } else { // App损坏
                     jump_target = ADDR_RECOVERY_APP;
                     /*
-                     * todo：这里还需要实现一个将config info中的升级状态机写成升级失败的逻辑
+                     * todo：这里还需要实现一个将config info中的升级状态机写成升级失败
                      */
                     break; // 通过break while实现提前跳出
                 }

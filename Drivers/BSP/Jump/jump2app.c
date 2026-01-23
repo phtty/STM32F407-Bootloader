@@ -34,14 +34,4 @@ uint8_t Is_App_Exist(uint32_t app_addr)
     return 0;
 }
 
-/**
- * @brief 判断配置区是否为全空(0xFF)
- */
-uint8_t Is_Config_Empty(SysInfo_t *info)
-{
-    // 检查魔数和一部分关键内容是否为0xFF
-    if (info->magic == 0xFFFFFFFF && info->config_crc == 0xFFFFFFFF) {
-        return 1;
-    }
-    return 0;
-}
+
