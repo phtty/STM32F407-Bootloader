@@ -138,7 +138,7 @@ int main(void)
 
     } else { // 条件D: 校验Config和Main App的CRC
         // 首先校验Config Info自身的CRC32
-        uint32_t calc_cfg_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)pConfig, (sizeof(pConfig) - sizeof(pConfig->config_crc)) / 4);
+        uint32_t calc_cfg_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)pConfig, (sizeof(SysInfo_t) - sizeof(pConfig->config_crc)) / 4);
 
         if ((pConfig->magic == CONFIG_MAGIC) && (calc_cfg_crc == pConfig->config_crc)) {
             // Config有效，校验Main App实体
