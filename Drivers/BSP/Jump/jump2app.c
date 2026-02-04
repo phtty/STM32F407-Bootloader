@@ -33,5 +33,3 @@ uint8_t Is_App_Exist(uint32_t app_addr)
 
     return 0;
 }
-
-

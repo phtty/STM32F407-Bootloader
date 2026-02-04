@@ -140,19 +140,23 @@ int main(void)
         uint32_t calc_cfg_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)pConfig, (sizeof(SysInfo_t) - sizeof(pConfig->config_crc)) / 4);
 
         if ((pConfig->magic == CONFIG_MAGIC) && (calc_cfg_crc == pConfig->config_crc)) {
-            // Config有效，校验Main App实体
-            uint32_t app_word_len = (pConfig->app_info.size + 3) / 4;
-            uint32_t calc_app_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)ADDR_MAIN_APP, app_word_len);
-
-            // 先判断升级状态机，状态机有误则直接进recovery
             do {
+                // 先判断升级状态机，状态机有误则直接进recovery
                 if (pConfig->update_sta != updated) { // 升级未完成，需要进recovery处理
                     jump_target = ADDR_RECOVERY_APP;
                     break; // 通过break while实现提前跳出
                 }
 
-                if (calc_app_crc == pConfig->app_info.crc32 && Is_App_Exist(ADDR_MAIN_APP)) { // 校验通过
-                    jump_target = ADDR_MAIN_APP;
+#ifdef DEBUG_MODE
+                if (Is_App_Exist(ADDR_MAIN_APP)) {
+                    jump_target = ADDR_MAIN_APP; // debug模式下只需要校验是否有栈指针
+#else
+                // 校验Main App实体
+                uint32_t app_word_len = (pConfig->app_info.size + 3) / 4;
+                uint32_t calc_app_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)ADDR_MAIN_APP, app_word_len);
+                if (calc_app_crc == pConfig->app_info.crc32 && Is_App_Exist(ADDR_MAIN_APP)) {
+                    jump_target = ADDR_MAIN_APP; // 非debug模式下需要同时校验app实体和栈指针
+#endif
 
                 } else { // App损坏
                     jump_target = ADDR_RECOVERY_APP;

@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define DEBUG_MODE 1
+
 // 地址与常量定义
 #define ADDR_CONFIG_SECTOR 0x08004000
 #define ADDR_RECOVERY_APP  0x08008000
