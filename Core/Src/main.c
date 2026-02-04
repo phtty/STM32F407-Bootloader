@@ -96,23 +96,22 @@ int main(void)
     MX_RTC_Init();
     /* USER CODE BEGIN 2 */
 
-    uint32_t jump_target = ADDR_RECOVERY_APP; // 默认Recovery
+    uint32_t jump_target = ADDR_RECOVERY_APP; // Ĭ��Recovery
 
-    // 判断是否增加崩溃计数
+    // �ж��Ƿ����ӱ�������
     if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)) {
         uint32_t crash_cnt = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) + 1;
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, crash_cnt);
         __HAL_RCC_CLEAR_RESET_FLAGS();
     }
 
-    // 读取崩溃计数和强制升级标志
+    // ��ȡ����������ǿ��������־
     uint32_t force_flag   = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0);
     uint32_t crash_count  = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
     SysInfo_t *pConfig    = (SysInfo_t *)ADDR_CONFIG_SECTOR;
     SysInfo_t config_info = {0};
 
-    force_flag = FLAG_FORCE_UPGRADE;        // 测试用，为了进恢复模式
-    if (force_flag == FLAG_FORCE_UPGRADE) { // 条件A: 强制升级标志
+    if (force_flag == FLAG_FORCE_UPGRADE) { // ����A: ǿ��������־
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, 0);
         jump_target = ADDR_RECOVERY_APP;
 
@@ -120,7 +119,7 @@ int main(void)
         config_info.update_sta = failed;
         Edit_Config_Info(&config_info);
 
-    } else if (crash_count > MAX_CRASH_COUNT) { // 条件B: 崩溃过频
+    } else if (crash_count > MAX_CRASH_COUNT) { // ����B: ������Ƶ
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
         jump_target = ADDR_RECOVERY_APP;
 
@@ -128,34 +127,34 @@ int main(void)
         config_info.update_sta = failed;
         Edit_Config_Info(&config_info);
 
-    } else if (Is_Config_Empty(pConfig)) { // 条件C: 出厂烧录状态
+    } else if (Is_Config_Empty(pConfig)) { // ����C: ������¼״̬
         Init_Config_Info(&config_info);
 
         if (Is_App_Exist(ADDR_MAIN_APP))
-            jump_target = ADDR_MAIN_APP; // 首次运行
+            jump_target = ADDR_MAIN_APP; // �״�����
         else
-            jump_target = ADDR_RECOVERY_APP; // 无Main
+            jump_target = ADDR_RECOVERY_APP; // ��Main
 
-    } else { // 条件D: 校验Config和Main App的CRC
-        // 首先校验Config Info自身的CRC32
+    } else { // ����D: У��Config��Main App��CRC
+        // ����У��Config Info������CRC32
         uint32_t calc_cfg_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)pConfig, (sizeof(SysInfo_t) - sizeof(pConfig->config_crc)) / 4);
 
         if ((pConfig->magic == CONFIG_MAGIC) && (calc_cfg_crc == pConfig->config_crc)) {
-            // Config有效，校验Main App实体
+            // Config��Ч��У��Main Appʵ��
             uint32_t app_word_len = (pConfig->app_info.size + 3) / 4;
             uint32_t calc_app_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)ADDR_MAIN_APP, app_word_len);
 
-            // 先判断升级状态机，状态机有误则直接进recovery
+            // ���ж�����״̬����״̬��������ֱ�ӽ�recovery
             do {
-                if (pConfig->update_sta != updated) { // 升级未完成，需要进recovery处理
+                if (pConfig->update_sta != updated) { // ����δ��ɣ���Ҫ��recovery����
                     jump_target = ADDR_RECOVERY_APP;
-                    break; // 通过break while实现提前跳出
+                    break; // ͨ��break whileʵ����ǰ����
                 }
 
-                if (calc_app_crc == pConfig->app_info.crc32 && Is_App_Exist(ADDR_MAIN_APP)) { // 校验通过
+                if (calc_app_crc == pConfig->app_info.crc32 && Is_App_Exist(ADDR_MAIN_APP)) { // У��ͨ��
                     jump_target = ADDR_MAIN_APP;
 
-                } else { // App损坏
+                } else { // App��
                     jump_target = ADDR_RECOVERY_APP;
 
                     SysInfo_t config_info = {0};
@@ -167,7 +166,7 @@ int main(void)
         }
     }
 
-    // 跳转前的清理工作
+    // ��תǰ����������
     HAL_IWDG_Refresh(&hiwdg);
 
     HAL_RCC_DeInit();
@@ -176,7 +175,7 @@ int main(void)
     SysTick->LOAD = 0;
     SysTick->VAL  = 0;
 
-    // 确认跳转地址存在栈指针
+    // ȷ����ת��ַ����ջָ��
     if (Is_App_Exist(jump_target)) {
         __disable_irq();
         execute_jump(jump_target);
@@ -186,7 +185,7 @@ int main(void)
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    for (;;) { // 如果跳转失败则死循环触发看门狗
+    for (;;) { // �����תʧ������ѭ���������Ź�
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
