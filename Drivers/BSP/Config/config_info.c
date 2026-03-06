@@ -27,8 +27,8 @@ void Init_Config_Info(SysInfo_t *info)
 
     memset(&(info->app_info), 0, sizeof(info->app_info)); // 初始化固件信息
 
+    // 初始化网络配置信息
     NetConfig_t net_info = {
-        // 初始化网络配置信息
         .ip   = {192, 168, 114, 200},
         .mask = {255, 255, 255, 0},
         .gw   = {192, 168, 114, 1},
