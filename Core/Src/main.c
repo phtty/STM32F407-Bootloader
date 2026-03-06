@@ -167,6 +167,8 @@ int main(void)
         }
     }
 
+    jump_target = ADDR_MAIN_APP; // 测试用，为了进主程序
+
     // 跳转前的清理工作
     HAL_IWDG_Refresh(&hiwdg);
 

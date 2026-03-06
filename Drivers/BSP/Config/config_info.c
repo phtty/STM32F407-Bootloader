@@ -23,7 +23,7 @@ bool Is_Config_Empty(volatile const SysInfo_t *info)
 void Init_Config_Info(SysInfo_t *info)
 {
     info->magic      = CONFIG_MAGIC; // 初始化魔数
-    info->update_sta = updated;      // 初始化升级状态机为成功
+    info->update_sta = updated;      // 初始化升级状态机为已升级
 
     memset(&(info->app_info), 0, sizeof(info->app_info)); // 初始化固件信息
 
