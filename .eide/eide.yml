@@ -103,7 +103,88 @@ targets:
             no-use-cxa-atexit: true
             one-elf-section-per-data: true
             one-elf-section-per-function: true
-            optimization: level-0
+            optimization: level-debug
+            warnings: all-warnings
+          global:
+            $float-abi-type: hard
+            arm-thumb-interwork: true
+            arm-thumb-mode: thumb
+            not-use-syscalls: true
+            output-debug-info: enable
+            use-newlib-nano: true
+          linker:
+            $toolName: auto
+            LIB_FLAGS: -lm
+            output-format: elf
+            remove-unused-input-sections: true
+        scatterFilePath: Compiler/STM32F407XX_FLASH.ld
+        storageLayout:
+          RAM: []
+          ROM: []
+        useCustomScatterFile: true
+    uploadConfigMap:
+      Custom:
+        bin: ""
+        commandLine: ""
+        eraseChipCommand: ""
+      JLink:
+        baseAddr: ""
+        bin: ""
+        cpuInfo:
+          cpuName: "null"
+          vendor: "null"
+        otherCmds: ""
+        proType: 1
+        speed: 8000
+      OpenOCD:
+        baseAddr: "0x08000000"
+        bin: ""
+        interface: cmsis-dap
+        target: stm32f4x
+      probe-rs:
+        allowEraseAll: false
+        baseAddr: "0x08000000"
+        bin: ${ExecutableName}.elf
+        otherOptions: ""
+        protocol: swd
+        speed: 10000
+        target: STM32F407ZG
+    uploader: probe-rs
+  Release:
+    cppPreprocessAttrs:
+      defineList:
+        - USE_HAL_DRIVER
+        - STM32F407xx
+      incList:
+        - Core/Inc
+        - Drivers/CMSIS/Device/ST/STM32F4xx/Include
+        - Drivers/STM32F4xx_HAL_Driver/Inc
+        - Drivers/CMSIS/Include
+        - Drivers/BSP/Jump
+        - Drivers/BSP/Config
+      libList: []
+    excludeList: []
+    toolchain: GCC
+    toolchainConfigMap:
+      GCC:
+        archExtensions: ""
+        cpuType: Cortex-M4
+        floatingPointHardware: single
+        options:
+          version: 5
+          afterBuildTasks: []
+          asm-compiler: {}
+          beforeBuildTasks: []
+          c/cpp-compiler:
+            language-c: c17
+            language-cpp: c++17
+            no-exceptions: true
+            no-rtti: true
+            no-threadsafe-statics: true
+            no-use-cxa-atexit: true
+            one-elf-section-per-data: true
+            one-elf-section-per-function: true
+            optimization: level-size
             warnings: all-warnings
           global:
             $float-abi-type: hard
@@ -137,4 +218,12 @@ targets:
         bin: ""
         interface: cmsis-dap
         target: stm32f4x
-    uploader: OpenOCD
+      probe-rs:
+        allowEraseAll: false
+        baseAddr: "0x08000000"
+        bin: ${ExecutableName}.elf
+        otherOptions: ""
+        protocol: swd
+        speed: 10000
+        target: STM32F407ZG
+    uploader: probe-rs
