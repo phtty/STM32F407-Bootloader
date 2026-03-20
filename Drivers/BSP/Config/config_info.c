@@ -9,7 +9,7 @@
 bool Is_Config_Empty(volatile const SysInfo_t *info)
 {
     // 检查魔数和一部分关键内容是否为0xFF
-    if (info->magic == 0xFFFFFFFF && info->config_crc == 0xFFFFFFFF) {
+    if ((info->magic == 0xFFFFFFFF && info->config_crc == 0xFFFFFFFF) || (info->app_info.crc32 == 0xFFFFFFFF)) {
         return true;
     }
     return false;
@@ -25,7 +25,9 @@ void Init_Config_Info(SysInfo_t *info)
     info->magic      = CONFIG_MAGIC; // 初始化魔数
     info->update_sta = updated;      // 初始化升级状态机为成功
 
-    memset(&(info->app_info), 0, sizeof(info->app_info)); // 初始化固件信息
+    // 初始化固件信息
+    memset(&(info->app_info), 0, sizeof(info->app_info));
+    info->app_info.crc32 == 0xFFFFFFFF;
 
     // 初始化网络配置信息
     NetConfig_t net_info = {

@@ -38,9 +38,9 @@ __attribute__((aligned(4))) typedef struct {
 
 // 升级状态机
 typedef enum {
-    updated  = 0,
-    updating = 1,
-    failed   = 2,
+    updated  = 0, // 升级成功
+    updating = 1, // 升级中
+    failed   = 2, // 升级失败
 } UpdateSta_t;
 
 bool Is_Config_Empty(volatile const SysInfo_t *info);
