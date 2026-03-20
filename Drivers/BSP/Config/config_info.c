@@ -27,7 +27,7 @@ void Init_Config_Info(SysInfo_t *info)
 
     // 初始化固件信息
     memset(&(info->app_info), 0, sizeof(info->app_info));
-    info->app_info.crc32 == 0xFFFFFFFF;
+    info->app_info.crc32 = 0xFFFFFFFF;
 
     // 初始化网络配置信息
     NetConfig_t net_info = {
