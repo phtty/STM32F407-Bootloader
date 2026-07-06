@@ -145,7 +145,7 @@ int main(void)
                     jump_target = ADDR_RECOVERY_APP;
                     break; // 通过break while实现提前跳出
                 }
-
+// #define DEBUG_MODE
 #ifdef DEBUG_MODE
                 if (Is_App_Exist(ADDR_MAIN_APP)) {
                     jump_target = ADDR_MAIN_APP; // debug模式下只需要校验是否有栈指针
