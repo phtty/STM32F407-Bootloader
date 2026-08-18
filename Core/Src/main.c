@@ -95,22 +95,22 @@ int main(void)
     MX_RTC_Init();
     /* USER CODE BEGIN 2 */
 
-    uint32_t jump_target = ADDR_RECOVERY_APP; // Ĭ��Recovery
+    uint32_t jump_target = ADDR_RECOVERY_APP; // 默认Recovery
 
-    // �ж��Ƿ����ӱ�������
+    // 判断是否增加崩溃计数
     if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)) {
         uint32_t crash_cnt = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) + 1;
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, crash_cnt);
         __HAL_RCC_CLEAR_RESET_FLAGS();
     }
 
-    // ��ȡ����������ǿ��������־
+    // 读取崩溃计数和强制升级标志
     uint32_t force_flag   = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0);
     uint32_t crash_count  = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
     SysInfo_t *pConfig    = (SysInfo_t *)ADDR_CONFIG_SECTOR;
     SysInfo_t config_info = {0};
 
-    if (force_flag == FLAG_FORCE_UPGRADE) { // ����A: ǿ��������־
+    if (force_flag == FLAG_FORCE_UPGRADE) { // 条件A: 强制升级标志
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, 0);
         jump_target = ADDR_RECOVERY_APP;
 
@@ -118,7 +118,7 @@ int main(void)
         config_info.update_sta = failed;
         Edit_Config_Info(&config_info);
 
-    } else if (crash_count > MAX_CRASH_COUNT) { // ����B: ������Ƶ
+    } else if (crash_count > MAX_CRASH_COUNT) { // 条件B: 崩溃过频
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
         jump_target = ADDR_RECOVERY_APP;
 
@@ -126,38 +126,38 @@ int main(void)
         config_info.update_sta = failed;
         Edit_Config_Info(&config_info);
 
-    } else if (Is_Config_Empty(pConfig)) { // ����C: ������¼״̬
+    } else if (Is_Config_Empty(pConfig)) { // 条件C: 出厂烧录状态
         Init_Config_Info(&config_info);
 
         if (Is_App_Exist(ADDR_MAIN_APP))
-            jump_target = ADDR_MAIN_APP; // �״�����
+            jump_target = ADDR_MAIN_APP; // 首次运行
         else
-            jump_target = ADDR_RECOVERY_APP; // ��Main
+            jump_target = ADDR_RECOVERY_APP; // 无Main
 
-    } else { // ����D: У��Config��Main App��CRC
-        // ����У��Config Info������CRC32
+    } else { // 条件D: 校验Config和Main App的CRC
+        // 首先校验Config Info自身的CRC32
         uint32_t calc_cfg_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)pConfig, (sizeof(SysInfo_t) - sizeof(pConfig->config_crc)) / 4);
 
         if ((pConfig->magic == CONFIG_MAGIC) && (calc_cfg_crc == pConfig->config_crc)) {
             do {
-                // ���ж�����״̬����״̬��������ֱ�ӽ�recovery
-                if (pConfig->update_sta != updated) { // ����δ��ɣ���Ҫ��recovery����
+                // 先判断升级状态机，状态机有误则直接进recovery
+                if (pConfig->update_sta != updated) { // 升级未完成，需要进recovery处理
                     jump_target = ADDR_RECOVERY_APP;
-                    break; // ͨ��break whileʵ����ǰ����
+                    break; // 通过break while实现提前跳出
                 }
 // #define DEBUG_MODE
 #ifdef DEBUG_MODE
                 if (Is_App_Exist(ADDR_MAIN_APP)) {
-                    jump_target = ADDR_MAIN_APP; // debugģʽ��ֻ��ҪУ���Ƿ���ջָ��
+                    jump_target = ADDR_MAIN_APP; // debug模式下只需要校验是否有栈指针
 #else
-                // У��Main Appʵ��
+                // 校验Main App实体
                 uint32_t app_word_len = (pConfig->app_info.size + 3) / 4;
                 uint32_t calc_app_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)ADDR_MAIN_APP, app_word_len);
                 if (calc_app_crc == pConfig->app_info.crc32 && Is_App_Exist(ADDR_MAIN_APP)) {
-                    jump_target = ADDR_MAIN_APP; // ��debugģʽ����ҪͬʱУ��appʵ���ջָ��
+                    jump_target = ADDR_MAIN_APP; // 非debug模式下需要同时校验app实体和栈指针
 #endif
 
-                } else { // App��
+                } else { // App损坏
                     jump_target = ADDR_RECOVERY_APP;
 
                     SysInfo_t config_info = {0};
@@ -166,10 +166,25 @@ int main(void)
                     Edit_Config_Info(&config_info);
                 }
             } while (false);
+        } else if (pConfig->magic == CONFIG_MAGIC) {
+            // magic 匹配但 config_crc 校验失败：Sector1 擦写中途掉电的半写态
+            // （magic 已写、config_crc 未写完/损坏）。走条件 C 重建出厂记录自愈：
+            // EraseConfigInfo + Init_Config_Info 写出厂记录（update_sta=updated、
+            // app_info.size=0、crc32=0xFFFFFFFF），随后按条件 C 现有逻辑跳转——
+            // 主固件存在 → 跳 0x08040000。重建后的出厂记录经条件 D 校验时
+            // 0 长度 CRC 恒匹配，仍能正确跳主固件，勿改该哨兵值语义。
+            // 注意区分：config_crc 错 → 重建；config_crc 对但 app CRC 不匹配
+            // （App 损坏）→ 仍跳 Recovery 由升级流程修复，勿改。
+            Init_Config_Info(&config_info);
+
+            if (Is_App_Exist(ADDR_MAIN_APP))
+                jump_target = ADDR_MAIN_APP; // 首次运行
+            else
+                jump_target = ADDR_RECOVERY_APP; // 无Main
         }
     }
 
-    // ��תǰ����������
+    // 跳转前的清理工作
     HAL_IWDG_Refresh(&hiwdg);
 
     HAL_RCC_DeInit();
@@ -178,7 +193,7 @@ int main(void)
     SysTick->LOAD = 0;
     SysTick->VAL  = 0;
 
-    // ȷ����ת��ַ����ջָ��
+    // 确认跳转地址存在栈指针
     if (Is_App_Exist(jump_target)) {
         __disable_irq();
         execute_jump(jump_target);
@@ -188,7 +203,7 @@ int main(void)
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    for (;;) { // �����תʧ������ѭ���������Ź�
+    for (;;) { // 如果跳转失败则死循环触发看门狗
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */

@@ -4,32 +4,43 @@
 #include <string.h>
 
 /**
- * @brief ÅĞ¶ÏÅäÖÃÇøÊÇ·ñÎªÈ«¿Õ(0xFF)
+ * @brief åˆ¤æ–­é…ç½®åŒºæ˜¯å¦ä¸ºç©ºï¼ˆä¸å¯ç”¨ï¼‰
+ *
+ * åˆ¤ç©ºåªçœ‹ magic ä¸€ä¸ªå“¨å…µï¼šåˆæ³•è®°å½• magic æ’ä¸º CONFIG_MAGICï¼ˆInit_Config_Info /
+ * Edit_Config_Info å†™å‡ºï¼‰ï¼Œmagic != CONFIG_MAGIC å³è§†ä¸ºç©ºâ€”â€”è¦†ç›–æ•´æ‰‡åŒºæœªå†™
+ * ï¼ˆå…¨ 0xFFï¼‰ä¸æ“¦å†™ä¸­é€”æ‰ç”µå¯¼è‡´ magic åŠå†™æŸåï¼ˆéå…¨ 0xFFï¼‰ä¸¤ç§æ€ã€‚
+ * ä¸å†æŠŠ app_info.crc32 == 0xFFFFFFFF å½“ä½œç©ºï¼šInit_Config_Info å‡ºå‚åˆå§‹åŒ–æ°å¥½æŠŠ
+ * app_info.crc32 å†™ä¸º 0xFFFFFFFFï¼ˆæ— å›ºä»¶è®°å½•å“¨å…µï¼‰ï¼Œæ—§é€»è¾‘å¯¼è‡´åˆå§‹åŒ–åæ¯æ¬¡å¼€æœº
+ * éƒ½è¢«è¯¯åˆ¤ä¸ºç©º â†’ åå¤æ‰§è¡Œæ¡ä»¶Cé‡ç½® IPã€‚
+ * è¯¥å“¨å…µä¸ä¸»å›ºä»¶ app_board_net_cfg.c çš„ç©ºæ‰‡åŒºåˆå§‹åŒ–è¯­ä¹‰ä¸€è‡´ï¼ˆ0xFF = æœªè®°å½•ï¼‰ï¼Œ
+ * ä¸»å›ºä»¶å†™å…¥ app_info çœŸå€¼åè¯¥å­—æ®µå³é 0xFFï¼Œä½† Bootloader åˆ¤ç©ºä¸ä¾èµ–å®ƒã€‚
+ * æ³¨ï¼šmagic åŒ¹é…ä½† config_crc æ ¡éªŒå¤±è´¥çš„åŠå†™æ€ï¼ˆmagic å·²å†™ã€CRC æœªå†™å®Œï¼‰ä¸åœ¨æ­¤
+ * åˆ¤ç©ºï¼Œç”± main.c æ¡ä»¶ D çš„ else åˆ†æ”¯èµ°æ¡ä»¶ C é‡å»ºè‡ªæ„ˆã€‚
  */
 bool Is_Config_Empty(volatile const SysInfo_t *info)
 {
-    // ¼ì²éÄ§ÊıºÍÒ»²¿·Ö¹Ø¼üÄÚÈİÊÇ·ñÎª0xFF
-    if ((info->magic == 0xFFFFFFFF && info->config_crc == 0xFFFFFFFF) || (info->app_info.crc32 == 0xFFFFFFFF)) {
+    // åˆæ³•è®°å½• magic æ’ä¸º CONFIG_MAGICï¼Œmagic ä¸åŒ¹é…å³è§†ä¸ºç©º
+    if (info->magic != CONFIG_MAGIC) {
         return true;
     }
     return false;
 }
 
 /**
- * @brief ³õÊ¼»¯config info²¢Ğ´Èëflash
+ * @brief åˆå§‹åŒ–config infoå¹¶å†™å…¥flash
  *
- * @param info config info½á¹¹Ìå
+ * @param info config infoç»“æ„ä½“
  */
 void Init_Config_Info(SysInfo_t *info)
 {
-    info->magic      = CONFIG_MAGIC; // ³õÊ¼»¯Ä§Êı
-    info->update_sta = updated;      // ³õÊ¼»¯Éı¼¶×´Ì¬»úÎª³É¹¦
+    info->magic      = CONFIG_MAGIC; // åˆå§‹åŒ–é­”æ•°
+    info->update_sta = updated;      // åˆå§‹åŒ–å‡çº§çŠ¶æ€æœºä¸ºæˆåŠŸ
 
-    // ³õÊ¼»¯¹Ì¼şĞÅÏ¢
+    // åˆå§‹åŒ–å›ºä»¶ä¿¡æ¯
     memset(&(info->app_info), 0, sizeof(info->app_info));
     info->app_info.crc32 = 0xFFFFFFFF;
 
-    // ³õÊ¼»¯ÍøÂçÅäÖÃĞÅÏ¢
+    // åˆå§‹åŒ–ç½‘ç»œé…ç½®ä¿¡æ¯
     NetConfig_t net_info = {
         .ip   = {192, 168, 114, 200},
         .mask = {255, 255, 255, 0},
@@ -38,33 +49,33 @@ void Init_Config_Info(SysInfo_t *info)
     };
     memcpy(&(info->net_cfg), &net_info, sizeof(NetConfig_t));
 
-    // ¼ÆËãconfig infoµÄcrcĞ£ÑéÖµ
+    // è®¡ç®—config infoçš„crcæ ¡éªŒå€¼
     info->config_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)info, (sizeof(SysInfo_t) - sizeof(info->config_crc)) / 4);
 
-    // ²Á³ıconfig infoËùÔÚÉÈÇø²¢½«Êı¾İĞ´Èë
+    // æ“¦é™¤config infoæ‰€åœ¨æ‰‡åŒºå¹¶å°†æ•°æ®å†™å…¥
     EraseConfigInfo();
     WriteConfigInfo(info);
 }
 
 /**
- * @brief ĞŞ¸Äconfig info²¢Ğ´Èëflash
+ * @brief ä¿®æ”¹config infoå¹¶å†™å…¥flash
  *
- * @param info config info½á¹¹Ìå
+ * @param info config infoç»“æ„ä½“
  */
 void Edit_Config_Info(SysInfo_t *info)
 {
-    // ¼ÆËãconfig infoµÄcrcĞ£ÑéÖµ
+    // è®¡ç®—config infoçš„crcæ ¡éªŒå€¼
     info->config_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)info, (sizeof(SysInfo_t) - sizeof(info->config_crc)) / 4);
 
-    // ²Á³ıconfig infoËùÔÚÉÈÇø²¢½«Êı¾İĞ´Èë
+    // æ“¦é™¤config infoæ‰€åœ¨æ‰‡åŒºå¹¶å°†æ•°æ®å†™å…¥
     EraseConfigInfo();
     WriteConfigInfo(info);
 }
 
 /**
- * @brief ²Á³ıflashÖĞµÄconfig info
+ * @brief æ“¦é™¤flashä¸­çš„config info
  *
- * @return HAL_StatusTypeDef ²Ù×÷½á¹û
+ * @return HAL_StatusTypeDef æ“ä½œç»“æœ
  */
 HAL_StatusTypeDef EraseConfigInfo(void)
 {
@@ -72,16 +83,16 @@ HAL_StatusTypeDef EraseConfigInfo(void)
     uint32_t SectorError                   = 0;
     FLASH_EraseInitTypeDef EraseInitStruct = {0};
 
-    HAL_FLASH_Unlock(); // ½âËøflash
+    HAL_FLASH_Unlock(); // è§£é”flash
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
 
     EraseInitStruct.TypeErase    = FLASH_TYPEERASE_SECTORS;
-    EraseInitStruct.VoltageRange = FLASH_VOLTAGE_RANGE_3; // µçÑ¹·¶Î§2.7V~3.6V
-    EraseInitStruct.Sector       = FLASH_SECTOR_1;        // »ñÈ¡ÉÈÇøºÅ
+    EraseInitStruct.VoltageRange = FLASH_VOLTAGE_RANGE_3; // ç”µå‹èŒƒå›´2.7V~3.6V
+    EraseInitStruct.Sector       = FLASH_SECTOR_1;        // è·å–æ‰‡åŒºå·
     EraseInitStruct.NbSectors    = 1;
     HAL_FLASHEx_Erase(&EraseInitStruct, &SectorError);
 
-    if (EraseInitStruct.Sector != FLASH_SECTOR_11) // ·ÀÖ¹µØÖ·Ô½½ç
+    if (EraseInitStruct.Sector != FLASH_SECTOR_11) // é˜²æ­¢åœ°å€è¶Šç•Œ
         status = HAL_FLASHEx_Erase(&EraseInitStruct, &SectorError);
 
     HAL_FLASH_Lock();
@@ -89,10 +100,10 @@ HAL_StatusTypeDef EraseConfigInfo(void)
 }
 
 /**
- * @brief ½«config infoĞ´Èëflash
+ * @brief å°†config infoå†™å…¥flash
  *
- * @param info config info½á¹¹Ìå
- * @return HAL_StatusTypeDef ²Ù×÷½á¹û
+ * @param info config infoç»“æ„ä½“
+ * @return HAL_StatusTypeDef æ“ä½œç»“æœ
  */
 HAL_StatusTypeDef WriteConfigInfo(SysInfo_t *info)
 {
@@ -101,12 +112,12 @@ HAL_StatusTypeDef WriteConfigInfo(SysInfo_t *info)
     HAL_FLASH_Unlock();
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
 
-    // °´word½«config infoĞ´Èëflash
+    // æŒ‰wordå°†config infoå†™å…¥flash
     for (uint32_t i = 0; i < sizeof(SysInfo_t) / 4; i++) {
         status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, ADDR_CONFIG_SECTOR + i * 4, ((uint32_t *)info)[i]);
 
         if (status != HAL_OK) {
-            break; // Ğ´Èë³ö´í£¬ÍË³ö
+            break; // å†™å…¥å‡ºé”™ï¼Œé€€å‡º
         }
     }
 
