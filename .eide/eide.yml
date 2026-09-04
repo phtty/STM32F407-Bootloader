@@ -133,11 +133,11 @@ targets:
         baseAddr: ""
         bin: ""
         cpuInfo:
-          cpuName: "null"
-          vendor: "null"
+          cpuName: STM32F407ZG
+          vendor: ST
         otherCmds: ""
         proType: 1
-        speed: 8000
+        speed: 32000
       OpenOCD:
         baseAddr: "0x08000000"
         bin: ""
@@ -151,7 +151,7 @@ targets:
         protocol: swd
         speed: 10000
         target: STM32F407ZG
-    uploader: probe-rs
+    uploader: JLink
   Release:
     cppPreprocessAttrs:
       defineList:

@@ -41,11 +41,14 @@ void Init_Config_Info(SysInfo_t *info)
     info->app_info.crc32 = 0xFFFFFFFF;
 
     // 初始化网络配置信息
+    // 方案 B（2026-08-21）：port=TCP 业务口（0x2538=9528 现状不变），
+    // udp_port=CQ UDP 业务口（20103）。
     NetConfig_t net_info = {
         .ip   = {192, 168, 114, 200},
         .mask = {255, 255, 255, 0},
         .gw   = {192, 168, 114, 1},
         .port = 0x2538,
+        .udp_port = 20103,
     };
     memcpy(&(info->net_cfg), &net_info, sizeof(NetConfig_t));
 

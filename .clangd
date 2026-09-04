@@ -6,6 +6,12 @@ CompileFlags:
     - -ID:\SoftWare\msys2\mingw64\lib\gcc\arm-none-eabi\13.3.0\include
     - -ID:\SoftWare\msys2\mingw64\lib\gcc\arm-none-eabi\13.3.0\include-fixed
     - -ID:\SoftWare\msys2\mingw64\arm-none-eabi\include
+    - -isystem/home/yystation/EnvTools/embedded-toolchain/arm-gnu-toolchain/arm-none-eabi/include/c++/15.2.1
+    - -isystem/home/yystation/EnvTools/embedded-toolchain/arm-gnu-toolchain/arm-none-eabi/include/c++/15.2.1/arm-none-eabi/thumb/v7e-m+fp/hard
+    - -isystem/home/yystation/EnvTools/embedded-toolchain/arm-gnu-toolchain/arm-none-eabi/include/c++/15.2.1/backward
+    - -isystem/home/yystation/EnvTools/embedded-toolchain/arm-gnu-toolchain/lib/gcc/arm-none-eabi/15.2.1/include
+    - -isystem/home/yystation/EnvTools/embedded-toolchain/arm-gnu-toolchain/lib/gcc/arm-none-eabi/15.2.1/include-fixed
+    - -isystem/home/yystation/EnvTools/embedded-toolchain/arm-gnu-toolchain/arm-none-eabi/include
   Remove: []
   CompilationDatabase: ./build/Debug
-  Compiler: D:\SoftWare\msys2\mingw64\bin\arm-none-eabi-gcc.exe
+  Compiler: /home/yystation/EnvTools/embedded-toolchain/arm-gnu-toolchain/bin/arm-none-eabi-gcc

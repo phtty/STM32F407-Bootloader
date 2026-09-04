@@ -7,42 +7,61 @@
 
 // #define DEBUG_MODE 1
 
-// µØÖ·Óë³£Á¿¶¨Òå
+// åœ°å€ä¸å¸¸é‡å®šä¹‰
 #define ADDR_CONFIG_SECTOR 0x08004000
 #define ADDR_RECOVERY_APP  0x08008000
 #define ADDR_MAIN_APP      0x08040000
 
 #define CONFIG_MAGIC       0x0d000721
 
-// ÍøÂçÅäÖÃ
+// ç½‘ç»œé…ç½®
+// å­—æ®µè¯­ä¹‰ï¼ˆæ–¹æ¡ˆ Bï¼Œ2026-08-21ï¼ŒTCP/UDP ç«¯å£å½»åº•åˆ†ç¦»ï¼Œä¸ä¸»å›ºä»¶
+// app_board_net_cfg_t åŠ Recovery NetConfig_t äºŒè¿›åˆ¶å…¼å®¹ï¼‰ï¼š
+//   port     = TCP ä¸šåŠ¡å£ï¼ˆLDI/IAP ç”Ÿæ€ï¼Œå‡ºå‚é»˜è®¤ 0x2538=9528ï¼‰
+//   udp_port = CQ UDP ä¸šåŠ¡å£ï¼ˆå‡ºå‚é»˜è®¤ 20103ï¼‰
 __attribute__((aligned(4))) typedef struct {
     uint8_t ip[4];
     uint8_t mask[4];
     uint8_t gw[4];
     uint32_t port;
+    uint32_t udp_port;
 } NetConfig_t;
 
-// main appĞÅÏ¢
+// main appä¿¡æ¯
 __attribute__((aligned(4))) typedef struct {
-    uint32_t size;  // Main AppµÄ×Ö½Ú³¤¶È
-    uint32_t crc32; // Main AppµÄCRC32Öµ
+    uint32_t size;  // Main Appçš„å­—èŠ‚é•¿åº¦
+    uint32_t crc32; // Main Appçš„CRC32å€¼
     char version[32];
 } FWInfo_t;
 
-// Ó¦¸Ã¶¨ÒåÔÚ0x08004000
+// åº”è¯¥å®šä¹‰åœ¨0x08004000
 __attribute__((aligned(4))) typedef struct {
-    uint32_t magic;      // Ä§Êı£¬ÅĞ¶ÏÅäÖÃÇøÊÇ·ñÓĞĞ§
-    uint32_t update_sta; // Éı¼¶×´Ì¬»ú
-    FWInfo_t app_info;   // main_app×´Ì¬
-    NetConfig_t net_cfg; // ÍøÂçÅäÖÃ
-    uint32_t config_crc; // ±¾½á¹¹Ìå×ÔÉíµÄĞ£Ñé
+    uint32_t magic;      // é­”æ•°ï¼Œåˆ¤æ–­é…ç½®åŒºæ˜¯å¦æœ‰æ•ˆ
+    uint32_t update_sta; // å‡çº§çŠ¶æ€æœº
+    FWInfo_t app_info;   // main_appçŠ¶æ€
+    NetConfig_t net_cfg; // ç½‘ç»œé…ç½®
+    uint32_t config_crc; // æœ¬ç»“æ„ä½“è‡ªèº«çš„æ ¡éªŒ
 } SysInfo_t;
 
-// Éı¼¶×´Ì¬»ú
+// å¸ƒå±€é”å®šï¼šä¸ä¸»å›ºä»¶ app_board_net_cfg.h / Recovery config_info.h äºŒè¿›åˆ¶å…¼å®¹
+// ï¼ˆC11+ ç¼–è¯‘æœŸç”Ÿæ•ˆï¼›Keil AC5 C90 ä¸‹è‡ªåŠ¨è·³è¿‡ï¼‰
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#include <stddef.h>
+_Static_assert(sizeof(NetConfig_t) == 20, "NetConfig å¸ƒå±€ 20B");
+_Static_assert(sizeof(FWInfo_t) == 40, "FWInfo å¸ƒå±€ 40B");
+_Static_assert(sizeof(SysInfo_t) == 72, "SysInfo å¸ƒå±€ 72B");
+_Static_assert(offsetof(SysInfo_t, magic) == 0, "magic åç§» 0");
+_Static_assert(offsetof(SysInfo_t, update_sta) == 4, "update_sta åç§» 4");
+_Static_assert(offsetof(SysInfo_t, app_info) == 8, "app_info åç§» 8");
+_Static_assert(offsetof(SysInfo_t, net_cfg) == 48, "net_cfg åç§» 48");
+_Static_assert(offsetof(SysInfo_t, config_crc) == 68, "config_crc åç§» 68");
+#endif
+
+// å‡çº§çŠ¶æ€æœº
 typedef enum {
-    updated  = 0, // Éı¼¶³É¹¦
-    updating = 1, // Éı¼¶ÖĞ
-    failed   = 2, // Éı¼¶Ê§°Ü
+    updated  = 0, // å‡çº§æˆåŠŸ
+    updating = 1, // å‡çº§ä¸­
+    failed   = 2, // å‡çº§å¤±è´¥
 } UpdateSta_t;
 
 bool Is_Config_Empty(volatile const SysInfo_t *info);
