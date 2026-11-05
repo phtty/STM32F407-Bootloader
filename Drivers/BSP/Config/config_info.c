@@ -8,11 +8,10 @@
  */
 bool Is_Config_Empty(volatile const SysInfo_t *info)
 {
-    // 检查魔数和一部分关键内容是否为0xFF
-    if ((info->magic == 0xFFFFFFFF && info->config_crc == 0xFFFFFFFF) || (info->app_info.crc32 == 0xFFFFFFFF)) {
-        return true;
-    }
-    return false;
+    /* 只看 magic 与 config_crc 两个哨兵：app_info.crc32 == 0xFFFFFFFF 是出厂时
+       Init_Config_Info 写入的"无固件记录"哨兵，不是空记录。把它也当空会让每次
+       上电都重擦配置区 —— role 字段（主/从卡）会被反复重置成主卡。 */
+    return info->magic == 0xFFFFFFFF && info->config_crc == 0xFFFFFFFF;
 }
 
 /**
@@ -37,6 +36,8 @@ void Init_Config_Info(SysInfo_t *info)
         .port = 0x2538,
     };
     memcpy(&(info->net_cfg), &net_info, sizeof(NetConfig_t));
+
+    info->role = role_master; // 默认主卡；从卡由 main app 进入 Recovery 前改写
 
     // 计算config info的crc校验值
     info->config_crc = HAL_CRC_Calculate(&hcrc, (uint32_t *)info, (sizeof(SysInfo_t) - sizeof(info->config_crc)) / 4);
@@ -96,6 +97,8 @@ HAL_StatusTypeDef EraseConfigInfo(void)
  */
 HAL_StatusTypeDef WriteConfigInfo(SysInfo_t *info)
 {
+    _Static_assert(sizeof(SysInfo_t) == 40, "SysInfo_t must be 40 bytes");
+
     HAL_StatusTypeDef status = HAL_ERROR;
 
     HAL_FLASH_Unlock();
